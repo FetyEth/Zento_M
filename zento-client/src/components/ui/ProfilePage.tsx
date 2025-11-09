@@ -66,6 +66,11 @@ const ProfilePage = () => {
       .replace(/[^a-z0-9-]/g, "");
   };
 
+  const truncateAddress = (address: any) => {
+    if (!address) return "";
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
   const fetchProfileData = async () => {
     if (!account?.address) return;
 
