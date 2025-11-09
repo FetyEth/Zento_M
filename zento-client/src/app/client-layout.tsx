@@ -1,6 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { ThirdwebProvider } from "thirdweb/react";
 import { useState } from "react";
@@ -9,20 +8,6 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const metadata: Metadata = {
-  applicationName: "Zento Markets",
-  title: "Zento Markets",
-  description: "An AI-powered permissionless prediction markets protocol, built on bnbchain",
-  manifest: "/manifest.json",
-  icons: {
-    icon: [
-      { url: "/icons/Pivot.svg", type: "image/svg+xml" },
-      { url: "/icons/Pivot.svg", sizes: "192x192", type: "image/png" },
-      { url: "/icons/Pivot.svg", sizes: "512x512", type: "image/png" },
-    ],
-    apple: { url: "/icons/pivot-200.png", sizes: "192x192", type: "image/png" },
-  },
-};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
