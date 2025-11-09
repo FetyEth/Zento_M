@@ -17,6 +17,8 @@ export const wallets = [
         "facebook",
         "phone",
         "passkey",
+        "x",
+        "telegram"
       ],
     },
   }),

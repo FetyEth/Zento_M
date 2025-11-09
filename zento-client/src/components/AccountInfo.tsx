@@ -1,5 +1,6 @@
 // Internal components
 import { LabelValueGrid, DisplayValue } from "@/components/LabelValueGrid";
+import { useActiveAccount } from "thirdweb/react";
 
 export function AccountInfo() {
   const account = useActiveAccount();
@@ -11,19 +12,8 @@ export function AccountInfo() {
           {
             label: "Address",
             value: (
-              <DisplayValue value={account?.address.toStringLong() ?? "Not Present"} isCorrect={!!account?.address} />
+              <DisplayValue value={account?.address.toString() ?? "Not Present"} isCorrect={!!account?.address} />
             ),
-          },
-          {
-            label: "Public key",
-            value: (
-              <DisplayValue value={account?.publicKey.toString() ?? "Not Present"} isCorrect={!!account?.publicKey} />
-            ),
-          },
-          {
-            label: "ANS name",
-            subLabel: "(only if attached)",
-            value: <p>{account?.ansName ?? "Not Present"}</p>,
           },
         ]}
       />
