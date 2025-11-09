@@ -8,7 +8,6 @@ import {
   CandlestickChart,
   SearchIcon,
   Loader,
-  ScanEye,
   LoaderCircle,
   InfoIcon,
   Droplets,

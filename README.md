@@ -1,19 +1,7 @@
-# Zento Markets - Smart Contract
+# Zento Markets - Permissionless Launchpad
 
 A permissionless prediction market launchpad built on Binance Smart Chain (BSC). Zento Markets enables users to create and trade on binary outcome markets (YES/NO) with automated market-making using a **Constant Product Market Maker (CPMM)**, native governance token staking, and transparent settlement.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Core Concepts](#core-concepts)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contract Functions](#contract-functions)
-- [ZENT Token & Staking](#zent-token--staking)
-- [Fee Structure](#fee-structure)
-- [Security](#security)
 
 ## Overview
 
@@ -38,7 +26,7 @@ The platform uses a **Constant Product Market Maker (CPMM)** with the formula `x
 - Market creation fee discounts for ZENT stakers
 
 ### 💱 Trading
-- Buy YES or NO positions using BSC USDT (BEP-40 compatible)
+- Buy YES or NO positions using BSC USDT 
 - Sell positions before market resolution
 - Dynamic pricing based on CPMM algorithm
 - Slippage protection with maximum price limits
@@ -373,13 +361,6 @@ await zentoMarkets.claimLpPrincipal(1);
 - APY varies by tier and total staked amount
 - Rewards claimed separately or compounded into stake
 
-### Public Sale
-
-- Owner can initialize token sale with configurable price
-- Users buy ZENT with USDT
-- Automatic token distribution
-- Remaining tokens returned to owner on sale end
-
 ## Fee Structure
 
 ### Trading Fees
@@ -415,39 +396,6 @@ await zentoMarkets.claimLpPrincipal(1);
 - **Dispute Reward**: 100 ZENT for successful challenges
 - **Slashing**: 100% of stake for failed disputes
 
-## Security
-
-### Access Controls
-
-- **Owner only**: Platform configuration, pause, dispute finalization, ZENT minting
-- **Oracle/Admin/Creator**: Market resolution
-- **Position owner only**: Claim winnings
-- **LP provider only**: Withdraw liquidity, claim principal
-- **Platform contract only**: ZENT token locking/slashing
-
-### Safety Features
-
-- ✅ OpenZeppelin battle-tested contracts
-- ✅ ReentrancyGuard on all state-changing functions
-- ✅ BEP-40 compatibility layer with balance verification
-- ✅ Slippage protection with maximum price limits
-- ✅ Balance validation before transfers
-- ✅ Market state checks (resolved, ended, disputed)
-- ✅ Outcome validation (1 or 2 only)
-- ✅ Zero-amount guards
-- ✅ Division by zero prevention
-- ✅ Overflow protection (Solidity 0.8+)
-- ✅ Pause functionality for emergency stops
-- ✅ Dispute window to prevent premature claims
-- ✅ Token lock mechanisms for disputes
-
-### BEP-40 Compatibility
-
-The contract includes a robust compatibility layer for BSC USDT (BEP-40):
-- Safe transfer functions with balance verification
-- Explicit success checks on transfers
-- Proper allowance handling
-- Helper functions for user-friendly approvals
 
 ### Audit Recommendations
 
@@ -456,18 +404,6 @@ The contract includes a robust compatibility layer for BSC USDT (BEP-40):
 - Fuzz testing for AMM calculations
 - Gas optimization review
 - Frontend integration testing with BSC USDT
-
-## Error Messages
-
-The contract uses descriptive error messages for all require statements:
-- "Invalid base token", "Invalid platform", "Invalid token"
-- "Contract paused", "Not initialized", "Already minted"
-- "Market not found", "Already resolved", "Market ended"
-- "Insufficient USDT balance", "Insufficient USDT allowance"
-- "Invalid amount", "Invalid outcome", "Invalid tier"
-- "Insufficient staked", "Still locked", "Tokens locked in dispute"
-- "Active dispute", "Dispute window active", "No rewards to claim"
-- And many more for comprehensive error handling
 
 ## Example Use Cases
 
@@ -517,26 +453,6 @@ The contract uses descriptive error messages for all require statements:
 - [ ] Multi-outcome markets (>2 options)
 - [ ] Chainlink/Band Protocol oracle integration
 - [ ] Advanced order types (limit orders, stop-loss)
-- [ ] NFT-based position tokens
-- [ ] Mobile SDK integration
-- [ ] Governance voting with ZENT
-- [ ] Cross-chain bridge support
-- [ ] Layer 2 scaling solution
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Disclaimer
-
-**⚠️ IMPORTANT DISCLAIMERS**:
-
-1. **Experimental Software**: This is experimental software. Use at your own risk.
-2. **Legal Compliance**: Prediction markets may be subject to legal restrictions in your jurisdiction. Users are responsible for ensuring compliance with local laws.
-3. **Financial Risk**: Trading in prediction markets involves financial risk. Only trade with funds you can afford to lose.
-4. **Smart Contract Risk**: While best practices are followed, smart contracts may contain bugs. No audit has been completed.
-5. **No Investment Advice**: Nothing in this documentation constitutes financial or investment advice.
-6. **Token Risk**: ZENT token value may fluctuate. Staking involves lock-up periods and potential slashing.
 
 ## Support & Community
 

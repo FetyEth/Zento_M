@@ -228,8 +228,6 @@ const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
 
   const balance = usdtBalance ? Number(usdtBalance) / 1e18 : 0;
 
-
-  console.log("balancee---", balance)
   // Overview Tab Component
   const OverviewTab = () => (
     <div className="space-y-6">
