@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWalletClient } from "@thalalabs/surf/hooks";
 // Internal components

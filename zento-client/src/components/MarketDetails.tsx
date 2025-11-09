@@ -39,7 +39,6 @@ import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { getContract, prepareContractCall, readContract } from "thirdweb";
 import { useSendTransaction, useReadContract } from "thirdweb/react";
 import { client, chain, wallets } from "@/lib/thirdweb";
-import { truncateAddress } from "@aptos-labs/wallet-adapter-react";
 
 // === CONFIG ===
 const MARKET_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_MARKET_CONTRACT_ADDRESS!;
@@ -112,82 +111,76 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
     address: USDT_CONTRACT_ADDRESS,
   });
 
-// === READ: USDT Balance ===
-const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
-  contract: usdtContract,
-  method: "function balanceOf(address) view returns (uint256)",
-  params: (account?.address ? [account.address] : []) as [string],
-  queryOptions: { enabled: !!account?.address },
-});
+  // === READ: USDT Balance ===
+  const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
+    contract: usdtContract,
+    method: "function balanceOf(address) view returns (uint256)",
+    params: (account?.address ? [account.address] : []) as [string],
+    queryOptions: { enabled: !!account?.address },
+  });
 
-const balance = usdtBalance ? Number(usdtBalance) / 1e18 : 0;
-
+  const balance = usdtBalance ? Number(usdtBalance) / 1e18 : 0;
 
   // === READ: Market Data ===
-useEffect(() => {
-  const fetchMarketData = async () => {
-    if (!market?.id) return;
-    setLoading(true);
-    try {
-      const details: any = await getMarketDetails(market.id);
-      console.log("get market details", details)
-      // Process the data immediately after fetching
-      if (details) {
-        const processedDetails = {
-          ...details,
-          creationTime: typeof details.creationTime === 'bigint' 
-            ? Number(details.creationTime) 
-            : Number(details.creationTime),
-          endTime: typeof details.endTime === 'bigint' 
-            ? Number(details.endTime) 
-            : Number(details.endTime),
-        };
-        setMarketDetails(processedDetails);
-        
-        // Fetch additional data
-        try {
-          const [trades, analytics] = await Promise.all([
-            getLatestTrades(parseFloat(market.id), 50),
-            getMarketAnalytics(market.id)
-            
-          ]);
-          console.log("got latest trades", trades)
-          fetchPriceHistory();
-          setMarketAnalytics(analytics);
-          setLatestTrades(Array.isArray(trades) ? trades : []);
-          setPriceHistory(transformTradeRecordsToProbabilityChart(trades));
-        } catch (secondaryError) {
-          console.error("Error fetching secondary data:", secondaryError);
-          setMarketAnalytics(null);
-          setLatestTrades([]);
-          setPriceHistory([]);
-        }
-      }
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      if (!market?.id) return;
+      setLoading(true);
+      try {
+        const details: any = await getMarketDetails(market.id);
+        console.log("get market details", details);
+        // Process the data immediately after fetching
+        if (details) {
+          const processedDetails = {
+            ...details,
+            creationTime:
+              typeof details.creationTime === "bigint" ? Number(details.creationTime) : Number(details.creationTime),
+            endTime: typeof details.endTime === "bigint" ? Number(details.endTime) : Number(details.endTime),
+          };
+          setMarketDetails(processedDetails);
 
-      // Fetch user positions
-      if (account?.address) {
-        try {
-          const positions: any = await getUserPositionDetails(market.id, parseFloat(account.address));
-          setUserPositions(positions || []);
-        } catch (positionError) {
-          console.error("Error fetching user positions:", positionError);
+          // Fetch additional data
+          try {
+            const [trades, analytics] = await Promise.all([
+              getLatestTrades(parseFloat(market.id), 50),
+              getMarketAnalytics(market.id),
+            ]);
+            console.log("got latest trades", trades);
+            fetchPriceHistory();
+            setMarketAnalytics(analytics);
+            setLatestTrades(Array.isArray(trades) ? trades : []);
+            setPriceHistory(transformTradeRecordsToProbabilityChart(trades));
+          } catch (secondaryError) {
+            console.error("Error fetching secondary data:", secondaryError);
+            setMarketAnalytics(null);
+            setLatestTrades([]);
+            setPriceHistory([]);
+          }
+        }
+
+        // Fetch user positions
+        if (account?.address) {
+          try {
+            const positions: any = await getUserPositionDetails(market.id, parseFloat(account.address));
+            setUserPositions(positions || []);
+          } catch (positionError) {
+            console.error("Error fetching user positions:", positionError);
+            setUserPositions([]);
+          }
+        } else {
           setUserPositions([]);
         }
-      } else {
-        setUserPositions([]);
+      } catch (error) {
+        console.error("Error fetching market data:", error);
+        toast.error("Failed to load market details");
+        setMarketDetails(null);
+      } finally {
+        setLoading(false);
       }
-      
-    } catch (error) {
-      console.error("Error fetching market data:", error);
-      toast.error("Failed to load market details");
-      setMarketDetails(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  fetchMarketData();
-}, [market?.id, account?.address]);
+    };
+
+    fetchMarketData();
+  }, [market?.id, account?.address]);
 
   // === FETCH PRICE HISTORY & TRADES ===
   const fetchPriceHistory = async () => {
@@ -247,43 +240,44 @@ useEffect(() => {
     maxSlippageBasisPoints: number,
   ) => {
     if (!account) return;
-  
+
     const amountWei = BigInt(Math.floor(amountUSDC * 1e18));
     const outcomeValue = outcome === "YES" ? 1 : 2;
-  
+
     try {
       console.log("=== STARTING BUY PROCESS ===");
       console.log("Parameters:", {
         marketId,
         outcome,
-        amountUSDC, 
+        amountUSDC,
         amountWei: amountWei.toString(),
         outcomeValue,
-        maxSlippageBasisPoints
+        maxSlippageBasisPoints,
       });
-  
+
       // Convert marketId to BigInt for uint64
       const marketIdBigInt = BigInt(marketId);
-  
+
       // === DEBUG: CHECK CONTRACT STATE FIRST ===
       toast.info("Checking contract state...");
       try {
         console.log("1. Checking market details...");
         const marketDetails = await readContract({
           contract: marketContract,
-          method: "function getMarketDetails(uint64) view returns (uint64, string, string, uint64, bool, uint8, uint8, uint256, address, address)",
+          method:
+            "function getMarketDetails(uint64) view returns (uint64, string, string, uint64, bool, uint8, uint8, uint256, address, address)",
           params: [marketIdBigInt],
         });
         console.log("Market details:", marketDetails);
-        
+
         const [id, endTime, resolved] = marketDetails;
         console.log("Market status:", {
           id: id.toString(),
           resolved,
           endTime: new Date(Number(endTime) * 1000),
-          currentTime: new Date()
+          currentTime: new Date(),
         });
-        
+
         if (resolved) {
           toast.error("Market is already resolved");
           return;
@@ -292,11 +286,10 @@ useEffect(() => {
           toast.error("Market has ended");
           return;
         }
-        
       } catch (debugError) {
         console.error("Debug market details failed:", debugError);
       }
-  
+
       try {
         console.log("2. Checking price calculation...");
         const price = await readContract({
@@ -305,11 +298,10 @@ useEffect(() => {
           params: [marketIdBigInt, outcomeValue],
         });
         console.log("Current price:", price.toString(), `(${Number(price) / 1e18})`);
-        
       } catch (priceError) {
         console.error("Price check failed:", priceError);
       }
-  
+
       try {
         console.log("3. Checking if contract is paused...");
         const paused = await readContract({
@@ -318,7 +310,7 @@ useEffect(() => {
           params: [],
         });
         console.log("Contract paused:", paused);
-        
+
         if (paused) {
           toast.error("Contract is currently paused");
           return;
@@ -326,7 +318,7 @@ useEffect(() => {
       } catch (pauseError) {
         console.error("Pause check failed:", pauseError);
       }
-  
+
       // === APPROVE USDT ===
       console.log("4. Checking USDT allowance...");
       const allowance = await readContract({
@@ -334,18 +326,18 @@ useEffect(() => {
         method: "function allowance(address owner, address spender) view returns (uint256)",
         params: [account.address, MARKET_CONTRACT_ADDRESS],
       });
-  
+
       console.log("Current allowance:", allowance.toString(), "Required:", amountWei.toString());
-  
+
       if (BigInt(allowance) < amountWei) {
         toast.info("Approving USDT...");
-        
+
         const approveTx = prepareContractCall({
           contract: usdtContract,
           method: "function approve(address spender, uint256 amount)",
           params: [MARKET_CONTRACT_ADDRESS, amountWei],
         });
-        
+
         await new Promise((resolve, reject) => {
           sendTransaction(approveTx, {
             onSuccess: (result) => {
@@ -360,10 +352,10 @@ useEffect(() => {
             },
           });
         });
-        
+
         // Wait for blockchain confirmation
         await new Promise((r) => setTimeout(r, 5000));
-        
+
         // Verify allowance was set
         const newAllowance = await readContract({
           contract: usdtContract,
@@ -374,10 +366,10 @@ useEffect(() => {
       } else {
         console.log("✓ Sufficient allowance already exists");
       }
-  
+
       // === BUY POSITION ===
       console.log("6. Executing buy position...");
-      
+
       // Calculate maxPrice based on current price + slippage
       // First get current price
       let currentPriceWei = BigInt(0);
@@ -393,47 +385,47 @@ useEffect(() => {
         // Fallback to a reasonable maxPrice
         currentPriceWei = BigInt(Math.floor(1.0 * 1e18));
       }
-  
+
       // Calculate maxPrice with slippage
       const slippageMultiplier = (10000 + maxSlippageBasisPoints) / 10000;
       const maxPrice = BigInt(Math.floor(Number(currentPriceWei) * slippageMultiplier));
-      
+
       console.log("Final buy parameters:", {
         marketId: marketIdBigInt.toString(),
-        outcome: outcomeValue, 
+        outcome: outcomeValue,
         amount: amountWei.toString(),
         maxPrice: maxPrice.toString(),
         currentPrice: currentPriceWei.toString(),
-        slippage: `${maxSlippageBasisPoints / 100}%`
+        slippage: `${maxSlippageBasisPoints / 100}%`,
       });
-  
+
       const buyTx = prepareContractCall({
         contract: marketContract,
         method: "function buyPosition(uint64 marketId, uint8 outcome, uint256 amount, uint256 maxPrice)",
         params: [marketIdBigInt, outcomeValue, amountWei, maxPrice],
       });
-  
+
       await new Promise((resolve, reject) => {
         sendTransaction(buyTx, {
           onSuccess: async (result) => {
             console.log("✓ Buy transaction successful:", result);
-            
+
             toast.success(`Bought ${outcome} for ${amountUSDC.toFixed(2)} USDT`, {
               style: { backgroundColor: "#064e3b", color: "#6ee7b7", border: "1px solid #10b981" },
               duration: 6000,
             });
-  
+
             // Update balances and refetch data
             await refetchUSDTBalance();
             queryClient.refetchQueries();
-            
+
             // Award points
             awardPoints({
               points: amountUSDC,
               action_type: `buy_${marketId}`,
               description: `Bet ${amountUSDC} USDT`,
             }).catch(() => {});
-            
+
             // Refetch market data
             try {
               const details = await getMarketDetails(marketId);
@@ -443,12 +435,12 @@ useEffect(() => {
             } catch (refetchError) {
               console.error("Error refetching data:", refetchError);
             }
-            
+
             resolve(null);
           },
           onError: (err) => {
             console.error("✗ Buy transaction failed:", err);
-            
+
             // Enhanced error parsing
             let errorMessage = "Buy failed. Try again.";
             if (err.message?.includes("Invalid amount")) errorMessage = "Invalid amount";
@@ -457,11 +449,12 @@ useEffect(() => {
             else if (err.message?.includes("Market ended")) errorMessage = "Market has ended";
             else if (err.message?.includes("Invalid outcome")) errorMessage = "Invalid outcome selection";
             else if (err.message?.includes("Active dispute")) errorMessage = "Market has active dispute";
-            else if (err.message?.includes("Price too high")) errorMessage = `Price too high - try increasing slippage above ${maxSlippageBasisPoints / 100}%`;
+            else if (err.message?.includes("Price too high"))
+              errorMessage = `Price too high - try increasing slippage above ${maxSlippageBasisPoints / 100}%`;
             else if (err.message?.includes("Insufficient USDT balance")) errorMessage = "Insufficient USDT balance";
             else if (err.message?.includes("Approve USDT first")) errorMessage = "Need to approve USDT first";
             else if (err.message?.includes("Zero shares")) errorMessage = "Amount too small to get shares";
-            
+
             toast.error(errorMessage, {
               style: { backgroundColor: "#7f1d1d", color: "#fca5a5", border: "1px solid #fca5a5" },
               duration: 6000,
@@ -577,12 +570,12 @@ useEffect(() => {
     if (!account || !side || !marketDetails) return;
     const amount = parseFloat(amountUSDC);
     if (isNaN(amount) || amount <= 0 || amount > balance) return;
-  
+
     const currentPrice = side === "YES" ? yesPrice : noPrice;
     const shares = Math.floor((amount * 10000) / (currentPrice * 10000));
     const totalShares = Number(marketDetails?.totalYesShares) + Number(marketDetails?.totalNoShares);
     let maxSlippageBasisPoints = 100; // 1% default
-  
+
     if (totalShares > 0) {
       const newPrice =
         (((side === "YES" ? Number(marketDetails?.totalYesShares) : Number(marketDetails?.totalNoShares)) + shares) *
@@ -593,13 +586,13 @@ useEffect(() => {
     } else {
       maxSlippageBasisPoints = 5000; // 50% for new markets
     }
-  
+
     console.log("Slippage calculation:", {
       currentPrice,
       maxSlippageBasisPoints,
-      maxSlippagePercent: maxSlippageBasisPoints / 100
+      maxSlippagePercent: maxSlippageBasisPoints / 100,
     });
-  
+
     setIsOpen(false);
     await onBuyPositionClick(market.id, side, amount, maxSlippageBasisPoints);
     setAmountUSDC("");
@@ -1153,9 +1146,7 @@ useEffect(() => {
 
             {/* Additional context */}
             <div className="mt-2 text-center">
-              <span className="text-gray-500 text-xs">
-                {Math.abs((yesPrice - noPrice) * 100).toFixed(1)}% spread
-              </span>
+              <span className="text-gray-500 text-xs">{Math.abs((yesPrice - noPrice) * 100).toFixed(1)}% spread</span>
             </div>
           </div>
         </div>
@@ -1468,9 +1459,7 @@ useEffect(() => {
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                   <h3 className="text-base sm:text-lg font-semibold text-slate-400">Tier</h3>
                 </div>
-                <div className="text-base sm:text-lg font-bold text-slate-400">
-                  {marketDetails?.tier}
-                </div>
+                <div className="text-base sm:text-lg font-bold text-slate-400">{marketDetails?.tier}</div>
               </div>
 
               <div className="bg-[#27272b] border border-gray-700/20 rounded-xl p-4 sm:p-6">
@@ -1919,7 +1908,7 @@ useEffect(() => {
                               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                                 <div className="flex items-center space-x-1 sm:space-x-2">
                                   <span className="font-medium text-slate-300 text-xs sm:text-sm truncate">
-                                    {truncateAddress(trade.user)}
+                                    {(trade.user)}
                                   </span>
                                   <span className="text-slate-500 text-xs sm:text-sm hidden sm:inline">{action}</span>
                                 </div>

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Trophy, Medal, Award, CircleUser, User, CheckCircle2, Twitter } from "lucide-react";
 import { useWalletAuth } from "@/app/hooks/useWalletAuth";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+
 import Link from "next/link";
 import MobileBottomNav from "./MobileBottomNav";
 import { WalletSelector } from "../WalletSelector";

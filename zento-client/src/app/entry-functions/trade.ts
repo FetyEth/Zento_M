@@ -1,5 +1,4 @@
 import { MODULE_ADDRESS } from "@/constants";
-import { InputTransactionData } from "@aptos-labs/wallet-adapter-react";
 
 export type BuyPositionArguments = {
   marketId: number;

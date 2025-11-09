@@ -11,7 +11,7 @@ import {
   PackageOpen,
   Droplets,
 } from "lucide-react";
-import { truncateAddress } from "@aptos-labs/wallet-adapter-react";
+
 import { AnimatePresence } from "framer-motion";
 import MobileBottomNav from "./MobileBottomNav";
 import Link from "next/link";
@@ -57,7 +57,6 @@ const ProfilePage = () => {
 
   const account = useActiveAccount();
   const { user } = useWalletAuth();
-  
 
   // Generate slug from market title
   const generateSlug = (title: string) => {
@@ -69,24 +68,24 @@ const ProfilePage = () => {
 
   const fetchProfileData = async () => {
     if (!account?.address) return;
-  
+
     const user = account.address.toString();
-  
+
     try {
       const marketIds = await getAllMarketIds();
       const numMarketIds = marketIds.map((id) => Number(id));
-  
+
       setLoadingMarkets(true);
-  
+
       const detailsPromises = numMarketIds.map((id) => getMarketDetails(id));
       const allMarketDetails = (await Promise.all(detailsPromises)).filter((d) => d !== null) as MarketDetails[];
       setCreatedMarkets(allMarketDetails.filter((m) => m.creator === user));
       setLoadingMarkets(false);
-  
+
       setLoadingPositions(true);
       const positionsPromises = numMarketIds.map((id) => getUserPositionDetails(user, id));
       const positionsPerMarket = await Promise.all(positionsPromises);
-      
+
       // Filter out empty arrays and create proper structure
       const positionsByMarket: any[] = [];
       for (let i = 0; i < numMarketIds.length; i++) {
@@ -95,85 +94,85 @@ const ProfilePage = () => {
           const marketId = numMarketIds[i];
           const marketDetails = allMarketDetails.find((m) => Number(m.id) === marketId);
           if (marketDetails) {
-            positionsByMarket.push({ 
-              marketId, 
+            positionsByMarket.push({
+              marketId,
               positions, // This is now guaranteed to be an array
-              marketDetails 
+              marketDetails,
             });
           }
         }
       }
       setUserPositionsByMarket(positionsByMarket);
       setLoadingPositions(false);
-  
+
       setLoadingTrades(true);
       const tradesPromises = numMarketIds.map((id) => getUserTradeHistory(user, id, 50));
       let tradesResults = await Promise.all(tradesPromises);
-  
+
       // Flatten and process trades with proper typing
       let allTrades: any[] = tradesResults
         .flat()
         .filter((t): t is any => t !== null && t !== undefined)
-        .map(trade => ({
+        .map((trade) => ({
           ...trade,
           shares: Number(trade.shares),
           price: Number(trade.price),
           timestamp: Number(trade.timestamp),
-          amount: trade.amount ? Number(trade.amount) : 0
+          amount: trade.amount ? Number(trade.amount) : 0,
         }))
         .sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
-  
+
       setLoadingTrades(false);
       console.log("loadingTrades", loadingTrades);
       console.log("First trade after proper flattening:", allTrades[0]);
-  
+
       // Calculate portfolio metrics from positions (source of truth)
       let totalInvested = 0;
       let positionsValue = 0;
       let unrealizedPnl = 0;
-  
+
       positionsByMarket.forEach((pm) => {
         pm.positions.forEach((p: any) => {
           // Current market price
           const currentPriceBp = p.outcome === 1 ? Number(pm.marketDetails.yesPrice) : Number(pm.marketDetails.noPrice);
           const currentPrice = currentPriceBp / PRICE_SCALE;
           const shares = p.shares / 10 ** SHARES_DECIMALS;
-  
+
           // Current value of position
           const value = shares * currentPrice;
           positionsValue += value;
-  
+
           // Cost basis (what was actually paid including fees)
           const avgPrice = Number(p.avgPrice) / PRICE_SCALE;
           const cost = shares * avgPrice;
           totalInvested += cost;
-  
+
           // Unrealized P&L
           unrealizedPnl += value - cost;
         });
       });
-  
+
       // Calculate realized profit from closed positions
       const totalInflows = allTrades
         .filter((t) => t.tradeType === 2 || t.tradeType === 4 || t.tradeType === 5)
         .reduce((sum, t) => sum + Number(t.amount) / 10 ** SHARES_DECIMALS, 0);
-  
+
       let totalOutflows = allTrades
         .filter((t) => t.tradeType === 1 || t.tradeType === 3)
         .reduce((sum, t) => sum + Number(t.amount) / 10 ** SHARES_DECIMALS, 0);
-  
+
       // Fallback: If no trade history for buys, use position cost basis as invested
       if (totalOutflows === 0 && totalInvested > 0) {
         totalOutflows = totalInvested;
       }
-  
+
       const realizedProfit = totalInflows - (totalOutflows - totalInvested);
       const totalProfit = realizedProfit + unrealizedPnl;
-  
+
       setInvested(totalOutflows * 2);
       setProfit(totalProfit);
       setNetWorth(balance + positionsValue);
-  
+
       let tempWins = 0;
       let tempLosses = 0;
       positionsByMarket.forEach((pm) => {
@@ -189,10 +188,10 @@ const ProfilePage = () => {
       setLosses(tempLosses);
       const totalResolved = tempWins + tempLosses;
       setWinRate(totalResolved > 0 ? (tempWins / totalResolved) * 100 : 0);
-  
+
       const currentTime = Math.floor(Date.now() / 1000);
       const holdTimes = positionsByMarket.flatMap((pm) =>
-        pm.positions.map((p: any) => (currentTime - Number(p.timestamp)) / 86400)
+        pm.positions.map((p: any) => (currentTime - Number(p.timestamp)) / 86400),
       );
       const avg = holdTimes.length > 0 ? holdTimes.reduce((sum, t) => sum + t, 0) / holdTimes.length : 0;
       setAvgHoldTime(avg);
@@ -211,18 +210,18 @@ const ProfilePage = () => {
   });
 
   // Read USDT balance
-const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
-  contract: usdtContract,
-  method: "function balanceOf(address) view returns (uint256)",
-  params: (account?.address ? [account.address] : []) as [string],
-  queryOptions: { enabled: !!account?.address },
-});
+  const { data: usdtBalance, refetch: refetchUSDTBalance } = useReadContract({
+    contract: usdtContract,
+    method: "function balanceOf(address) view returns (uint256)",
+    params: (account?.address ? [account.address] : []) as [string],
+    queryOptions: { enabled: !!account?.address },
+  });
 
   useEffect(() => {
     if (account?.address) {
-      refetchUSDTBalance(); 
+      refetchUSDTBalance();
       fetchProfileData();
-      setLoadingBalance(false)
+      setLoadingBalance(false);
     }
   }, [account?.address]);
 

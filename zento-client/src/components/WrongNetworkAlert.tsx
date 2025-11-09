@@ -1,7 +1,7 @@
 "use client";
 
 import { NETWORK } from "@/constants";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+
 import * as Dialog from "@radix-ui/react-dialog";
 
 export function WrongNetworkAlert() {
