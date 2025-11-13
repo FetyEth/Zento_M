@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Clock,
   Users,
@@ -100,7 +100,7 @@ class PredictionMarketsAPI {
   private baseUrl: string;
   public sessionId: string | null = null;
 
-  constructor(baseUrl: string = "https://pivot-tst.onrender.com") {
+  constructor(baseUrl: string = "https://pivot-tst-1.onrender.com") {
     this.baseUrl = baseUrl;
   }
 
@@ -242,33 +242,56 @@ const MarketCard = ({ market }: any) => {
 
     router.push(`/market/${slug}/${market.id}`);
   };
+
+  // Function to trim title to a specific word count
+  const trimTitle = (title: string, maxWords: number = 8) => {
+    const words = title.split(" ");
+    if (words.length <= maxWords) return title;
+    return words.slice(0, maxWords).join(" ") + "...";
+  };
+
   return (
     <div
       className={`bg-[#27272b] border border-gray-700/30 rounded-2xl p-6 hover:border-[#66666765] transition-all duration-300 h-full flex flex-col ${
         account?.address ? "cursor-pointer group" : "cursor-auto"
       }`}
       onClick={handleMarketClick}
-      title={market.id.toString()}
+      title={market.title}
     >
-      {/* Header with title and arc meter */}
+      {/* Header with title, icon, and arc meter */}
       <div className="flex items-start justify-between mb-6">
-        <div className="flex-1 pr-4">
-          <h3 className="text-white text-wrap font-semibold text-lg leading-tight truncate">{market.title}</h3>
+        <div className="flex items-start gap-3 flex-1 pr-4">
+          {/* Category Icon */}
+          <div className="flex-shrink-0 w-6 h-6 text-[#d5a514] mt-0.5">
+            {/* {getCategoryIcon(market)} */}
+            <img src="/icons/zento-logo.png" />
+          </div>
+
+          {/* Title */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-white font-semibold text-lg leading-tight line-clamp-2">
+              {trimTitle(market.title, 8)}
+            </h3>
+          </div>
         </div>
+
+        {/* Arc Meter */}
         <ArcMeter percentage={yesPercentage} />
       </div>
 
       {/* YES/NO buttons with prices */}
-      <div
-        className={`grid grid-cols-2 gap-3 mb-6 ${
-          market.title.length < 50 ? "mt-6" : market.title.length < 100 ? "mt-3" : "mt-0"
-        }`}
-      >
-        <button className="bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-xl py-3 px-4 transition-all duration-200 h-[4.5rem] flex flex-col justify-center">
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <button
+          className="bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-xl py-3 px-4 transition-all duration-200 h-[4.5rem] flex flex-col justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="text-green-400 text-sm font-medium mb-1">YES</div>
           <div className="text-green-300 text-lg font-bold">{(market.yesPrice * 100).toFixed(1)}%</div>
         </button>
-        <button className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl py-3 px-4 transition-all duration-200 h-[4.5rem] flex flex-col justify-center">
+        <button
+          className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl py-3 px-4 transition-all duration-200 h-[4.5rem] flex flex-col justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="text-red-400 text-sm font-medium mb-1">NO</div>
           <div className="text-red-300 text-lg font-bold">{(market.noPrice * 100).toFixed(1)}%</div>
         </button>
@@ -277,10 +300,6 @@ const MarketCard = ({ market }: any) => {
       {/* Stats */}
       <div className="flex justify-between items-center text-sm text-gray-300 mt-auto">
         <div className="flex items-center gap-4">
-          {/* <span className="flex items-center gap-1">
-            <DollarSign className="w-4 h-4 text-gray-400" />
-            {market.volume}
-          </span> */}
           <span className="flex items-center gap-1">
             <CandlestickChart className="w-4 h-4 text-gray-400" />
             {(Number(market.totalVolume) / 1e18).toLocaleString()} USDT
@@ -299,76 +318,98 @@ const MarketCard = ({ market }: any) => {
   );
 };
 
+interface AIAssistantPanelProps {
+  isVisible: boolean;
+  onClose: () => void;
+  apiBaseUrl?: string;
+  selectedHeadline?: NewsItem | null;
+  allInsights?: NewsItem[];
+}
+
 const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   isVisible,
   onClose,
-  apiBaseUrl = "https://pivot-tst.onrender.com",
+  apiBaseUrl = "https://pivot-tst-1.onrender.com",
+  selectedHeadline,
+  allInsights = [],
 }) => {
   const [api] = useState(() => new PredictionMarketsAPI(apiBaseUrl));
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<
-    Array<{
-      type: "user" | "assistant" | "insight";
-      content: string;
-      data?: any;
-      timestamp: Date;
-    }>
-  >([]);
-  const [insights, setInsights] = useState<NewsItem[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load all insights when panel opens - no API call needed
+  useEffect(() => {
+    if (isVisible && allInsights.length > 0) {
+      displayAllInsights();
+    }
+  }, [isVisible, allInsights]);
+
+  const displayAllInsights = () => {
+    const insightMessages = allInsights.map((item: NewsItem) => ({
+      type: "insight" as const,
+      content: `${item.summary}`,
+      data: {
+        summary: item.summary,
+        timestamp: item.timestamp,
+        title: item.title,
+        url: item.url,
+      },
+      metadata: {
+        score: item.score,
+        upvote_ratio: item.real_data_context?.upvote_ratio || item.upvote_ratio,
+        num_comments: item.num_comments,
+        category: item.category,
+        subreddit: item.subreddit,
+        isSelected: selectedHeadline?.title === item.title,
+      },
+      timestamp: formatDistanceToNow(new Date(item.timestamp)),
+    }));
+
+    // If there's a selected headline, move it to the top
+    if (selectedHeadline) {
+      const selectedIndex = insightMessages.findIndex((msg) => msg.metadata.isSelected);
+      if (selectedIndex > -1) {
+        const [selectedMessage] = insightMessages.splice(selectedIndex, 1);
+        insightMessages.unshift(selectedMessage);
+      }
+    }
+
+    setMessages(insightMessages);
+    setIsLoading(false);
+  };
 
   const toggleTooltip = () => {
     setIsTooltipVisible(!isTooltipVisible);
   };
 
-  // Load initial insights when panel opens
-  useEffect(() => {
-    if (isVisible) {
-      loadInitialInsights();
-    }
-  }, [isVisible]);
-
-  const loadInitialInsights = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.getTrendingNews(["economics", "sports", "technology", "crypto"], 50);
-
-      if (response.success && response.trending_news) {
-        setInsights(response.trending_news);
-
-        // Create messages with full metadata
-        const insightMessages = response.trending_news.map((item: NewsItem) => ({
-          type: "insight" as const,
-          content: `${item.summary}`,
-          data: {
-            summary: item.summary,
-            timestamp: item.timestamp,
-          },
-          metadata: {
-            score: item.score,
-            upvote_ratio: item.real_data_context?.upvote_ratio || item.upvote_ratio,
-            num_comments: item.num_comments,
-          },
-          timestamp: formatDistanceToNow(new Date(item.timestamp)) as any,
-        }));
-
-        console.log("insights", insights);
-        setMessages(insightMessages);
-      } else {
-        throw new Error("No trending news found in response");
+  const formatMessageContent = (content: string) => {
+    return content.split(/(https?:\/\/[^\s]+)/g).map((part: string, i: number) => {
+      if (part.match(/^https?:\/\//)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 px-2 py-0.5 mx-1 bg-[#d5a514]/20 hover:bg-[#d5a514]/30 rounded text-[#d5a514] transition-colors flex-shrink-0 max-w-[120px] truncate"
+            title={part}
+          >
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+            <span className="text-xs font-medium truncate">view</span>
+          </a>
+        );
       }
-    } catch (error) {
-      console.error("Failed to load initial insights:", error);
-      setMessages([
-        {
-          type: "assistant",
-          content: "Unable to load market insights. Please check your connection to the prediction markets API.",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
+      return part;
+    });
   };
 
   if (!isVisible) return null;
@@ -385,7 +426,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             <div className="relative">
               <div className="flex items-center gap-2">
                 <h3 className="text-white font-medium">Trending Topics</h3>
-                {api.sessionId && <span className="text-xs text-[#d5a514]">●</span>}
                 <div className="relative group">
                   <button onClick={toggleTooltip} className="focus:outline-none mt-2">
                     <InfoIcon className="w-4 h-4 text-[#d5a514] cursor-pointer" />
@@ -420,7 +460,12 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             )}
 
             {messages.map((message: any, index) => (
-              <div key={index} className={`${message.type === "user" ? "ml-4" : "mr-4"}`}>
+              <div
+                key={index}
+                className={`${message.type === "user" ? "ml-4" : "mr-4"} ${
+                  message.metadata?.isSelected ? "ring-2 ring-[#d5a514] rounded-lg" : ""
+                }`}
+              >
                 <div
                   className={`rounded-lg p-3 break-words ${
                     message.type === "user"
@@ -430,32 +475,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                         : "bg-[#27272b] text-gray-100 border border-[#d5a514]/20"
                   }`}
                 >
-                  <div className="text-sm mb-1 break-words">
-                    {message.content.split(/(https?:\/\/[^\s]+)/g).map((part: string, i: number) => {
-                      if (part.match(/^https?:\/\//)) {
-                        return (
-                          <a
-                            key={i}
-                            href={part}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2 py-0.5 mx-1 bg-[#d5a514]/20 hover:bg-[#d5a514]/30 rounded text-[#d5a514] transition-colors"
-                          >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                              />
-                            </svg>
-                            <span className="text-xs font-medium">view</span>
-                          </a>
-                        );
-                      }
-                      return part;
-                    })}
-                  </div>
+                  <div className="text-sm mb-1 break-words">{formatMessageContent(message.content)}</div>
 
                   {/* Render specific data based on message type */}
                   {message.data && Array.isArray(message.data) && (
@@ -550,6 +570,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                 </div>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
         </div>
       </div>
@@ -697,12 +718,16 @@ export default function PivotMarketApp() {
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [sortBy, setSortBy] = useState("Latest");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
+
   const [selectedMarket, setSelectedMarket] = useState<any>(null);
   const account = useActiveAccount();
   const { user } = useWalletAuth();
+
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [selectedHeadline, setSelectedHeadline] = useState<NewsItem | null>(null);
   const [headlines, setHeadlines] = useState<NewsItem[]>([]);
   const [headlinesLoading, setHeadlinesLoading] = useState(true);
+  const [allInsights, setAllInsights] = useState<NewsItem[]>([]);
 
   // Get market details
   useEffect(() => {
@@ -725,11 +750,12 @@ export default function PivotMarketApp() {
     const loadHeadlines = async () => {
       try {
         setHeadlinesLoading(true);
-        const api = new PredictionMarketsAPI("https://pivot-tst.onrender.com");
+        const api = new PredictionMarketsAPI("https://pivot-tst-1.onrender.com");
         const response = await api.getTrendingNews(["economics", "sports", "technology", "crypto"], 50);
 
         if (response.success && response.trending_news) {
           setHeadlines(response.trending_news);
+          setAllInsights(response.trending_news); // Store all insights for the panel
         }
       } catch (error) {
         console.error("Failed to load headlines:", error);
@@ -740,6 +766,11 @@ export default function PivotMarketApp() {
 
     loadHeadlines();
   }, []);
+
+  const handleHeadlineClick = (headline: NewsItem) => {
+    setSelectedHeadline(headline);
+    setShowAIAssistant(true);
+  };
 
   // Filter and sort markets
   useEffect(() => {
@@ -888,45 +919,49 @@ export default function PivotMarketApp() {
             <div className="flex items-center">
               {/* User Coins Display */}
               {user && (
-                <div className="flex items-center gap-1.5 px-2 mr-4 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-lg shadow-sm">
-                  <PixelCoins className="w-4 h-4 text-[#d5a514]" />
-                  <span className="text-sm font-semibold text-[#d5a514]">{(user.points ?? 0).toLocaleString()}</span>
+                <div className="flex items-center mr-1 gap-1 px-2 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-md shadow-sm sm:gap-1.5 sm:px-2 sm:py-2 sm:rounded-lg">
+                  <PixelCoins className="w-3.5 h-3.5 text-[#d5a514] sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-semibold text-[#d5a514]">
+                    {(user.points ?? 0).toLocaleString()}
+                  </span>
                 </div>
               )}
 
               {/* Right Action Buttons */}
-              <div className="flex items-center gap-2 transform -translate-x-2">
-                {[
-                  {
-                    label: "Get Faucet",
-                    icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,
-                    href: "https://www.bnbchain.org/en/testnet-faucet",
-                    isLink: true,
-                  },
-                ].map((btn: any, i) =>
-                  btn.isLink ? (
-                    <a
-                      key={i}
-                      href={btn.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={btn.label}
-                      className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
-                    >
-                      {btn.icon}
-                    </a>
-                  ) : (
-                    <button
-                      key={i}
-                      onClick={btn.onClick}
-                      title={btn.label}
-                      className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
-                    >
-                      {btn.icon}
-                    </button>
-                  ),
-                )}
-              </div>
+              {account?.address && (
+                <div className="flex items-center gap-2 transform translate-x-1">
+                  {[
+                    {
+                      label: "Get Faucet",
+                      icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,
+                      href: "https://www.bnbchain.org/en/testnet-faucet",
+                      isLink: true,
+                    },
+                  ].map((btn: any, i) =>
+                    btn.isLink ? (
+                      <a
+                        key={i}
+                        href={btn.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </a>
+                    ) : (
+                      <button
+                        key={i}
+                        onClick={btn.onClick}
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </button>
+                    ),
+                  )}
+                </div>
+              )}
 
               {/* Wallet Connect */}
               <div className="flex items-center">
@@ -996,7 +1031,7 @@ export default function PivotMarketApp() {
       {/* Hero Section */}
 
       <HeroSlideshow />
-      <HeadlineSlideshow headlines={headlines} isLoading={headlinesLoading} />
+      <HeadlineSlideshow headlines={headlines} isLoading={headlinesLoading} onHeadlineClick={handleHeadlineClick} />
 
       <div className="max-w-7xl mt-8 mx-auto lg:mb-16 mb-8 px-4 ">
         {/* Filters Section */}
@@ -1029,7 +1064,7 @@ export default function PivotMarketApp() {
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-[#1c1b20] border border-[#27272b] rounded-lg placeholder:text-[#6c6c6f] text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/80"
+                className="w-full pl-10 pr-4 py-3 bg-[#1c1b20] border border-[#27272b] rounded-lg placeholder:text-[#6c6c6f] text-white placeholder-gray-400 focus:outline-none focus:border-[#d5a514]/80"
               />
             </div>
 
@@ -1041,7 +1076,7 @@ export default function PivotMarketApp() {
                     <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-emerald-500/80 appearance-none cursor-pointer"
+                      className="w-full bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-[#d5a514]/80 appearance-none cursor-pointer"
                     >
                       {statusFilters.map((status) => (
                         <option key={status} value={status}>
@@ -1059,7 +1094,7 @@ export default function PivotMarketApp() {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-emerald-500/80 appearance-none cursor-pointer"
+                      className="w-full bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-[#d5a514]/80 appearance-none cursor-pointer"
                     >
                       {sortOptions.map((option) => (
                         <option key={option} value={option}>
@@ -1080,7 +1115,7 @@ export default function PivotMarketApp() {
                     <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-emerald-500/80 appearance-none cursor-pointer"
+                      className="bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-[#d5a514]/80 appearance-none cursor-pointer"
                     >
                       {statusFilters.map((status) => (
                         <option key={status} value={status}>
@@ -1098,7 +1133,7 @@ export default function PivotMarketApp() {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-emerald-500/80 appearance-none cursor-pointer"
+                      className="bg-[#1c1b20] border border-[#27272b] rounded-lg px-3 py-3 pr-8 text-[#c6c6c7] focus:outline-none focus:border-[#d5a514]/80 appearance-none cursor-pointer"
                     >
                       {sortOptions.map((option) => (
                         <option key={option} value={option}>
@@ -1225,7 +1260,16 @@ export default function PivotMarketApp() {
       </div>
 
       {/* AI Assistant Panel */}
-      <AIAssistantPanel isVisible={showAIAssistant} onClose={() => setShowAIAssistant(false)} />
+      <AIAssistantPanel
+        isVisible={showAIAssistant}
+        onClose={() => {
+          setShowAIAssistant(false);
+          setSelectedHeadline(null);
+        }}
+        selectedHeadline={selectedHeadline}
+        allInsights={allInsights}
+      />
+
       <MobileBottomNav
         onInsightsClick={() => setShowAIAssistant(!showAIAssistant)}
         isInsightsActive={showAIAssistant}

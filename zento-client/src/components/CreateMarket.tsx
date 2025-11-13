@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Send, BarChart3, DollarSign, Globe, MessageCircle, Circle, CheckCircle, Edit3 } from "lucide-react";
+import { Send, BarChart3, DollarSign, Globe, MessageCircle, Circle, CheckCircle, Edit3, Droplets } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useActiveAccount, useSendTransaction, useReadContract, ConnectButton } from "thirdweb/react";
@@ -76,7 +76,7 @@ const CreateMarket = () => {
     address: MARKET_CONTRACT_ADDRESS,
   });
 
-   const usdtContract = getContract({
+  const usdtContract = getContract({
     client,
     chain,
     address: USDT_CONTRACT_ADDRESS,
@@ -120,7 +120,7 @@ const CreateMarket = () => {
       hasAutoSentHeadlineRef.current = true;
       const decodedHeadline = decodeURIComponent(headlineFromUrl);
       const predictionMarketPrompt = `Based on this headline: "${decodedHeadline}", suggest some questions`;
-      console.log(currentStep, progress)
+      console.log(currentStep, progress);
       setInput(predictionMarketPrompt);
       handleSendHeadline(predictionMarketPrompt, decodedHeadline);
     }
@@ -137,7 +137,7 @@ const CreateMarket = () => {
       let response;
 
       if (!sessionId) {
-        response = await fetch("https://pivot-tst.onrender.com/api/market/search-suggestions", {
+        response = await fetch("https://pivot-tst-1.onrender.com/api/market/search-suggestions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -147,7 +147,7 @@ const CreateMarket = () => {
           }),
         });
       } else {
-        response = await fetch("https://pivot-tst.onrender.com/api/market/continue", {
+        response = await fetch("https://pivot-tst-1.onrender.com/api/market/continue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -249,13 +249,13 @@ const CreateMarket = () => {
       let response;
 
       if (!sessionId) {
-        response = await fetch("https://pivot-tst.onrender.com/api/market/search-suggestions", {
+        response = await fetch("https://pivot-tst-1.onrender.com/api/market/search-suggestions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: input, user_id: userId }),
         });
       } else {
-        response = await fetch("https://pivot-tst.onrender.com/api/market/continue", {
+        response = await fetch("https://pivot-tst-1.onrender.com/api/market/continue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session_id: sessionId, response: input }),
@@ -409,42 +409,42 @@ const CreateMarket = () => {
       setMessages((prev) => [
         ...prev.slice(0, messageIndex),
         { role: "ai", content: "Please connect your wallet first." },
-        ...prev.slice(messageIndex)
+        ...prev.slice(messageIndex),
       ]);
       return;
     }
-  
+
     // === VALIDATION ===
     if (creatingCustomMarket) {
       const validationMessages = {
         noQuestion: "Enter a market question.",
         noCategory: "Enter a category.",
         noEndDate: "Select an end date.",
-        noResolution: "Add resolution criteria."
+        noResolution: "Add resolution criteria.",
       };
-  
+
       let errorMessage = "";
       if (!marketProposal.question?.trim()) errorMessage = validationMessages.noQuestion;
       else if (!marketProposal.category?.trim()) errorMessage = validationMessages.noCategory;
       else if (!marketProposal.end_date) errorMessage = validationMessages.noEndDate;
       else if (!marketProposal.resolution_criteria?.trim()) errorMessage = validationMessages.noResolution;
-  
+
       if (errorMessage) {
         const validationIndex = marketProposalStartIndex >= 0 ? marketProposalStartIndex + 1 : messages.length;
         setMessages((prev) => [
           ...prev.slice(0, validationIndex),
           { role: "ai", content: errorMessage },
-          ...prev.slice(validationIndex)
+          ...prev.slice(validationIndex),
         ]);
         return;
       }
     }
-  
+
     const title = marketProposal.question;
     const description = marketProposal.resolution_criteria;
     const resolution_criteria = marketProposal.resolution_criteria || "Resolved via official sources.";
     const oracle = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd" as `0x${string}`;
-  
+
     let formattedEndTime: bigint;
     try {
       const [datePart, timePart] = marketProposal.end_date.split(" ");
@@ -458,7 +458,7 @@ const CreateMarket = () => {
         setMessages((prev) => [
           ...prev.slice(0, dateIndex),
           { role: "ai", content: "End time must be in the future!" },
-          ...prev.slice(dateIndex)
+          ...prev.slice(dateIndex),
         ]);
         return;
       }
@@ -467,25 +467,25 @@ const CreateMarket = () => {
       setMessages((prev) => [
         ...prev.slice(0, dateErrorIndex),
         { role: "ai", content: "Invalid date format." },
-        ...prev.slice(dateErrorIndex)
+        ...prev.slice(dateErrorIndex),
       ]);
       return;
     }
-  
+
     try {
       setLoading(true);
-      
-      const preparingIndex = marketProposalStartIndex >= 0 ? marketProposalStartIndex + 1 : messages.length;
-      setMessages((prev) => [
-        ...prev.slice(0, preparingIndex),
-        { role: "ai", content: "Preparing market..." },
-        ...prev.slice(preparingIndex)
-      ]);
-  
+
+      // const preparingIndex = marketProposalStartIndex >= 0 ? marketProposalStartIndex + 1 : messages.length;
+      // setMessages((prev) => [
+      //   ...prev.slice(0, preparingIndex),
+      //   { role: "ai", content: "Preparing market..." },
+      //   ...prev.slice(preparingIndex)
+      // ]);
+
       const liquidityInWei = BigInt(Math.floor(initialLiquidity * 1e18));
       const creationFeeInWei = BigInt(Math.floor(creationFeeFormatted * 1e18));
       const totalRequired = liquidityInWei + creationFeeInWei;
-  
+
       // === CHECK USDT ALLOWANCE ===
       const allowance = await readContract({
         contract: usdtContract,
@@ -493,14 +493,14 @@ const CreateMarket = () => {
         params: [account.address, MARKET_CONTRACT_ADDRESS],
       });
       const currentAllowance = BigInt(allowance);
-  
+
       if (currentAllowance < totalRequired) {
         const approveTx = prepareContractCall({
           contract: usdtContract,
           method: "function approve(address spender, uint256 amount)",
           params: [MARKET_CONTRACT_ADDRESS, totalRequired],
         });
-  
+
         await new Promise<void>((resolve, reject) => {
           sendTransaction(approveTx, {
             onSuccess: () => {
@@ -509,7 +509,7 @@ const CreateMarket = () => {
               setMessages((prev) => [
                 ...prev.slice(0, approvedIndex),
                 { role: "ai", content: "USDT approved!" },
-                ...prev.slice(approvedIndex)
+                ...prev.slice(approvedIndex),
               ]);
               resolve();
             },
@@ -518,17 +518,17 @@ const CreateMarket = () => {
               setMessages((prev) => [
                 ...prev.slice(0, approvalErrorIndex),
                 { role: "ai", content: "Approval failed." },
-                ...prev.slice(approvalErrorIndex)
+                ...prev.slice(approvalErrorIndex),
               ]);
               reject(err);
             },
           });
         });
-  
+
         // Wait for indexer
         await new Promise((r) => setTimeout(r, 4000));
       }
-  
+
       // === FINAL ALLOWANCE CHECK ===
       const finalAllowance = await readContract({
         contract: usdtContract,
@@ -540,25 +540,25 @@ const CreateMarket = () => {
         return setMessages((prev) => [
           ...prev.slice(0, allowanceErrorIndex),
           { role: "ai", content: "Approval not successful. Try again." },
-          ...prev.slice(allowanceErrorIndex)
+          ...prev.slice(allowanceErrorIndex),
         ]);
       }
-  
+
       // === CREATE MARKET ===
       const creatingIndex = marketProposalStartIndex >= 0 ? marketProposalStartIndex + 1 : messages.length;
       setMessages((prev) => [
         ...prev.slice(0, creatingIndex),
         { role: "ai", content: "Creating market..." },
-        ...prev.slice(creatingIndex)
+        ...prev.slice(creatingIndex),
       ]);
-  
+
       const createTx = prepareContractCall({
         contract: marketContract,
         method:
           "function createMarket(string title, string description, string resolutionCriteria, uint64 endTime, address oracle, uint256 initialLiquidity)",
         params: [title, description, resolution_criteria, formattedEndTime, oracle, liquidityInWei],
       });
-  
+
       let txResult: any;
       try {
         txResult = await new Promise<any>((resolve, reject) => {
@@ -573,27 +573,27 @@ const CreateMarket = () => {
           : err.message.includes("Insufficient liquidity")
             ? `Need ≥ ${minLiquidityFormatted} USDT.`
             : "Failed to create market.";
-        
+
         const createErrorIndex = marketProposalStartIndex >= 0 ? marketProposalStartIndex + 1 : messages.length;
         setMessages((prev) => [
           ...prev.slice(0, createErrorIndex),
           { role: "ai", content: msg },
-          ...prev.slice(createErrorIndex)
+          ...prev.slice(createErrorIndex),
         ]);
         return;
       }
-  
+
       // Wait for confirmation (optional)
       await txResult.receipt;
-  
+
       // === SUCCESS ===
       const successIndex = marketProposalStartIndex >= 0 ? marketProposalStartIndex + 1 : messages.length;
       setMessages((prev) => [
         ...prev.slice(0, successIndex),
         { role: "ai", content: `Market "${title}" created! Live now.` },
-        ...prev.slice(successIndex)
+        ...prev.slice(successIndex),
       ]);
-      
+
       setMarketCreated(true);
       setCreatedMarketTitle(title);
       setEditingMarket(false);
@@ -608,7 +608,7 @@ const CreateMarket = () => {
       setMessages((prev) => [
         ...prev.slice(0, catchErrorIndex),
         { role: "ai", content: "Transaction failed. Try again." },
-        ...prev.slice(catchErrorIndex)
+        ...prev.slice(catchErrorIndex),
       ]);
     } finally {
       setLoading(false);
@@ -695,15 +695,56 @@ const CreateMarket = () => {
               </Link>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4">
+            {/* Right Side Actions */}
+            <div className="flex items-center">
+              {/* User Coins Display */}
               {user && (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-lg">
-                  <PixelCoins className="w-4 h-4 text-[#d5a514]" />
-                  <span className="text-sm font-semibold text-[#d5a514]">{(user.points ?? 0).toLocaleString()}</span>
+                <div className="flex items-center mr-1 gap-1 px-2 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-md shadow-sm sm:gap-1.5 sm:px-2 sm:py-2 sm:rounded-lg">
+                  <PixelCoins className="w-3.5 h-3.5 text-[#d5a514] sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-semibold text-[#d5a514]">
+                    {(user.points ?? 0).toLocaleString()}
+                  </span>
                 </div>
               )}
 
-              <div className="flex gap-1 sm:gap-2 items-center">
+              {/* Right Action Buttons */}
+              {account?.address && (
+                <div className="flex items-center gap-2 transform translate-x-1">
+                  {[
+                    {
+                      label: "Get Faucet",
+                      icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,
+                      href: "https://www.bnbchain.org/en/testnet-faucet",
+                      isLink: true,
+                    },
+                  ].map((btn: any, i) =>
+                    btn.isLink ? (
+                      <a
+                        key={i}
+                        href={btn.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </a>
+                    ) : (
+                      <button
+                        key={i}
+                        onClick={btn.onClick}
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </button>
+                    ),
+                  )}
+                </div>
+              )}
+
+              {/* Wallet Connect */}
+              <div className="flex items-center">
                 <ConnectButton
                   client={client}
                   chain={chain}
@@ -711,7 +752,6 @@ const CreateMarket = () => {
                   connectButton={{
                     label: (
                       <>
-                        {/* ✅ Proper wallet icon */}
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="20"
@@ -722,7 +762,7 @@ const CreateMarket = () => {
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          style={{ marginRight: "2px" }}
+                          className="mr-1"
                         >
                           <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z" />
                           <path d="M21 12h-4a2 2 0 0 0 0 4h4" />
@@ -738,15 +778,14 @@ const CreateMarket = () => {
                       fontSize: "14px",
                       gap: "0.4rem",
                       height: "2.5rem",
-                      position: "relative",
-                      overflow: "hidden",
                       backgroundColor: "#d5a514",
                       color: "white",
                       fontWeight: 600,
-                      padding: "0.75rem 0.35rem",
-                      borderRadius: "0.375rem",
+                      padding: "0.75rem 0.75rem",
+                      borderRadius: "0.5rem",
                       transition: "all 0.2s ease-in-out",
                       cursor: "pointer",
+                      boxShadow: "0 0 8px rgba(213,165,20,0.3)",
                     },
                   }}
                   detailsButton={{
@@ -757,7 +796,6 @@ const CreateMarket = () => {
                   connectModal={{
                     size: "wide",
                     title: "Sign in to your account",
-                    titleIcon: "",
                     showThirdwebBranding: true,
                   }}
                   accountAbstraction={{
@@ -895,7 +933,8 @@ const CreateMarket = () => {
                       ...prev,
                       {
                         role: "ai",
-                        content: "Let's create your custom market! Fill in the details below and I'll help you create a prediction market.",
+                        content:
+                          "Let's create your custom market! Fill in the details below and I'll help you create a prediction market.",
                       },
                     ]);
                   }}
@@ -1192,131 +1231,131 @@ const CreateMarket = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-           <div className="bg-gradient-to-r from-[#2a2a30]/80 to-[#28282f]/80 backdrop-blur-sm border border-gray-600/40 rounded-2xl p-6 shadow-lg">
-  <div className="flex justify-between items-center mb-4">
-    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-      Market Proposal
-      <Edit3 className="w-5 h-5 text-[#ecb62f]" />
-    </h3>
-    
-    <div className="flex gap-3 flex-wrap">
-      <button
-        onClick={onCreateMarket}
-        disabled={loading || !account || !!error}
-        className="px-6 py-3 bg-[#d5a514] hover:bg-[#c49712] text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <CheckCircle className="w-4 h-4" />
-        {loading ? "Creating..." : "Create Market"}
-      </button>
-      <button
-        onClick={() => {
-          setEditingMarket(false);
-          setSelectedSuggestion(null);
-          setMarketProposal(null);
-          setCreatingCustomMarket(false);
+            <div className="bg-gradient-to-r from-[#2a2a30]/80 to-[#28282f]/80 backdrop-blur-sm border border-gray-600/40 rounded-2xl p-6 shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  Market Proposal
+                  <Edit3 className="w-5 h-5 text-[#ecb62f]" />
+                </h3>
 
-          if (creatingCustomMarket) {
-            setMessages([]);
-            setCurrentStep(0);
-            setProgress("");
-          } else {
-            setShowSuggestions(true);
-          }
-        }}
-        className="px-6 py-3 bg-gradient-to-r from-[#2a2a30] to-[#2f2f35] hover:from-[#2f2f35] hover:to-[#323238] text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2"
-      >
-        {creatingCustomMarket ? "Cancel" : "Back"}
-      </button>
-    </div>
-  </div>
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    onClick={onCreateMarket}
+                    disabled={loading || !account || !!error}
+                    className="px-6 py-3 bg-[#d5a514] hover:bg-[#c49712] text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    {loading ? "Creating..." : "Create Market"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingMarket(false);
+                      setSelectedSuggestion(null);
+                      setMarketProposal(null);
+                      setCreatingCustomMarket(false);
 
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div className="space-y-4">
-      <div>
-        <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">Market Question</h4>
-        <textarea
-          defaultValue={marketProposal?.question || selectedSuggestion?.question || ""}
-          className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm resize-none focus:border-[#d5a514] focus:outline-none transition-colors"
-          rows={3}
-          onChange={(e) => {
-            setMarketProposal((prev: any) => ({
-              ...prev,
-              question: e.target.value,
-              title: e.target.value.slice(0, 100),
-            }));
-          }}
-          placeholder="What would you like people to predict?"
-        />
-      </div>
-      <div>
-        <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">Category</h4>
-        <input
-          defaultValue={marketProposal?.category || selectedSuggestion?.category || ""}
-          onChange={(e) => {
-            setMarketProposal((prev: any) => ({
-              ...prev,
-              category: e.target.value,
-            }));
-          }}
-          className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm focus:border-[#d5a514] focus:outline-none transition-colors"
-          placeholder="Category (e.g., Crypto, Sports, Politics, Tech)"
-        />
-      </div>
-      <div>
-        <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">End Date</h4>
-        <input
-          type="date"
-          defaultValue={
-            marketProposal?.end_date
-              ? parseDate(marketProposal.end_date)
-              : selectedSuggestion?.end_date
-                ? parseDate(selectedSuggestion.end_date)
-                : ""
-          }
-          onChange={(e) => {
-            const existingDateTime = marketProposal?.end_date;
-            let timePortion = "21:18";
+                      if (creatingCustomMarket) {
+                        setMessages([]);
+                        setCurrentStep(0);
+                        setProgress("");
+                      } else {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-[#2a2a30] to-[#2f2f35] hover:from-[#2f2f35] hover:to-[#323238] text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2"
+                  >
+                    {creatingCustomMarket ? "Cancel" : "Back"}
+                  </button>
+                </div>
+              </div>
 
-            if (existingDateTime && existingDateTime.includes(" ")) {
-              timePortion = existingDateTime.split(" ")[1];
-            }
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">Market Question</h4>
+                    <textarea
+                      defaultValue={marketProposal?.question || selectedSuggestion?.question || ""}
+                      className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm resize-none focus:border-[#d5a514] focus:outline-none transition-colors"
+                      rows={3}
+                      onChange={(e) => {
+                        setMarketProposal((prev: any) => ({
+                          ...prev,
+                          question: e.target.value,
+                          title: e.target.value.slice(0, 100),
+                        }));
+                      }}
+                      placeholder="What would you like people to predict?"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">Category</h4>
+                    <input
+                      defaultValue={marketProposal?.category || selectedSuggestion?.category || ""}
+                      onChange={(e) => {
+                        setMarketProposal((prev: any) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }));
+                      }}
+                      className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm focus:border-[#d5a514] focus:outline-none transition-colors"
+                      placeholder="Category (e.g., Crypto, Sports, Politics, Tech)"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">End Date</h4>
+                    <input
+                      type="date"
+                      defaultValue={
+                        marketProposal?.end_date
+                          ? parseDate(marketProposal.end_date)
+                          : selectedSuggestion?.end_date
+                            ? parseDate(selectedSuggestion.end_date)
+                            : ""
+                      }
+                      onChange={(e) => {
+                        const existingDateTime = marketProposal?.end_date;
+                        let timePortion = "21:18";
 
-            const dateParts = e.target.value.split("-");
-            const newDateTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]} ${timePortion}`;
+                        if (existingDateTime && existingDateTime.includes(" ")) {
+                          timePortion = existingDateTime.split(" ")[1];
+                        }
 
-            setMarketProposal((prev: any) => ({
-              ...prev,
-              end_date: newDateTime,
-            }));
-          }}
-          className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm focus:border-[#d5a514] focus:outline-none transition-colors"
-        />
-      </div>
-      <div>
-        <h4 className="text-sm font-semibold text-[#ecb62f] mb-1 flex items-center gap-2">
-          Initial Liquidity (USDT)
-          <span className="text-red-400">*</span>
-          <div className="relative group">
-            <div className="w-4 h-4 bg-gray-600 rounded-full flex items-center justify-center text-xs text-gray-300 cursor-pointer hover:bg-gray-500 transition-colors">
-              i
-            </div>
+                        const dateParts = e.target.value.split("-");
+                        const newDateTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]} ${timePortion}`;
 
-            <div className="absolute -left-20 lg:left-0 top-6 bg-gray-900 border border-gray-600 rounded-lg p-3 text-xs text-gray-200 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-              More liquidity = better trading experience. Min: {minLiquidityFormatted} USDT. Creation fee:{" "}
-              {creationFeeFormatted} USDT. Your balance: {balance.toFixed(2)} USDT
-            </div>
-          </div>
-        </h4>
+                        setMarketProposal((prev: any) => ({
+                          ...prev,
+                          end_date: newDateTime,
+                        }));
+                      }}
+                      className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm focus:border-[#d5a514] focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#ecb62f] mb-1 flex items-center gap-2">
+                      Initial Liquidity (USDT)
+                      <span className="text-red-400">*</span>
+                      <div className="relative group">
+                        <div className="w-4 h-4 bg-gray-600 rounded-full flex items-center justify-center text-xs text-gray-300 cursor-pointer hover:bg-gray-500 transition-colors">
+                          i
+                        </div>
 
-        <div className="relative">
-          <input
-            type="number"
-            min={minLiquidityFormatted}
-            step="1"
-            value={initialLiquidity}
-            onChange={handleLiquidityChange}
-            placeholder={`${minLiquidityFormatted}`}
-            className={`
+                        <div className="absolute -left-20 lg:left-0 top-6 bg-gray-900 border border-gray-600 rounded-lg p-3 text-xs text-gray-200 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                          More liquidity = better trading experience. Min: {minLiquidityFormatted} USDT. Creation fee:{" "}
+                          {creationFeeFormatted} USDT. Your balance: {balance.toFixed(2)} USDT
+                        </div>
+                      </div>
+                    </h4>
+
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={minLiquidityFormatted}
+                        step="1"
+                        value={initialLiquidity}
+                        onChange={handleLiquidityChange}
+                        placeholder={`${minLiquidityFormatted}`}
+                        className={`
               w-full bg-[#2f2f35]/70 border ${
                 error ? "border-red-500" : "border-gray-600/50"
               } rounded-lg p-3 text-gray-100 text-sm pr-16
@@ -1325,88 +1364,88 @@ const CreateMarket = () => {
               [&::-webkit-inner-spin-button]:appearance-none
               focus:outline-none focus:border-[#d5a514] transition-colors
             `}
-            required
-          />
-        </div>
+                        required
+                      />
+                    </div>
 
-        {error && <p className="text-red-400 text-xs mt-1 flex items-center">{error}</p>}
-        <p className="text-xs text-gray-400 mt-1">
-          Total required: {(initialLiquidity + creationFeeFormatted).toFixed(2)} USDT (includes{" "}
-          {creationFeeFormatted} USDT fee)
-        </p>
-      </div>
-    </div>
+                    {error && <p className="text-red-400 text-xs mt-1 flex items-center">{error}</p>}
+                    <p className="text-xs text-gray-400 mt-1">
+                      Total required: {(initialLiquidity + creationFeeFormatted).toFixed(2)} USDT (includes{" "}
+                      {creationFeeFormatted} USDT fee)
+                    </p>
+                  </div>
+                </div>
 
-    <div className="space-y-4">
-      <div>
-        <h4 className="text-sm font-semibold text-[#ecb62f] mb-2">AI Analysis</h4>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-gray-400">AI Probability:</span>
-            <span className="text-[#ecb62f] font-medium">
-              {((marketProposal?.ai_probability || selectedSuggestion?.ai_probability || 0) * 100).toFixed(
-                1,
-              )}
-              %
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Confidence:</span>
-            <span className="text-[#ecb62f] font-medium">
-              {((marketProposal?.confidence || selectedSuggestion?.confidence || 0) * 100).toFixed(0)}%
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Sentiment Score:</span>
-            <span className="text-[#ecb62f] font-medium">
-              {(
-                (marketProposal?.sentiment_score || selectedSuggestion?.sentiment_score || 0) * 100
-              ).toFixed(1)}
-              %
-            </span>
-          </div>
-        </div>
-      </div>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#ecb62f] mb-2">AI Analysis</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">AI Probability:</span>
+                        <span className="text-[#ecb62f] font-medium">
+                          {((marketProposal?.ai_probability || selectedSuggestion?.ai_probability || 0) * 100).toFixed(
+                            1,
+                          )}
+                          %
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Confidence:</span>
+                        <span className="text-[#ecb62f] font-medium">
+                          {((marketProposal?.confidence || selectedSuggestion?.confidence || 0) * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Sentiment Score:</span>
+                        <span className="text-[#ecb62f] font-medium">
+                          {(
+                            (marketProposal?.sentiment_score || selectedSuggestion?.sentiment_score || 0) * 100
+                          ).toFixed(1)}
+                          %
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-      {(marketProposal?.key_factors || selectedSuggestion?.key_factors) && (
-        <div>
-          <h5 className="text-xs font-semibold text-[#ecb62f] mb-1">Key Factors</h5>
-          <ul className="text-xs text-gray-300 space-y-1">
-            {(marketProposal?.key_factors || selectedSuggestion?.key_factors || []).map(
-              (factor: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-1">
-                  <span className="text-[#ecb62f]">•</span>
-                  {factor}
-                </li>
-              ),
-            )}
-          </ul>
+                  {(marketProposal?.key_factors || selectedSuggestion?.key_factors) && (
+                    <div>
+                      <h5 className="text-xs font-semibold text-[#ecb62f] mb-1">Key Factors</h5>
+                      <ul className="text-xs text-gray-300 space-y-1">
+                        {(marketProposal?.key_factors || selectedSuggestion?.key_factors || []).map(
+                          (factor: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-1">
+                              <span className="text-[#ecb62f]">•</span>
+                              {factor}
+                            </li>
+                          ),
+                        )}
+                      </ul>
 
-          <div>
-            <h5 className="text-xs mt-4 font-semibold text-[#ecb62f] mb-1">Context</h5>
-            <div className="text-xs text-gray-400 italic">{marketProposal.context}</div>
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
+                      <div>
+                        <h5 className="text-xs mt-4 font-semibold text-[#ecb62f] mb-1">Context</h5>
+                        <div className="text-xs text-gray-400 italic">{marketProposal.context}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-  <div className="mt-4 pt-4 border-t border-gray-600/30">
-    <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">Resolution Criteria</h4>
-    <textarea
-      defaultValue={marketProposal?.resolution_criteria || selectedSuggestion?.resolution_criteria || ""}
-      onChange={(e) => {
-        setMarketProposal((prev: any) => ({
-          ...prev,
-          resolution_criteria: e.target.value,
-        }));
-      }}
-      className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm resize-none focus:border-[#d5a514] focus:outline-none transition-colors"
-      rows={3}
-      placeholder="Describe exactly how this market will be resolved. Be specific and include links to the sources that will determine the outcome."
-    />
-  </div>
-</div>
+              <div className="mt-4 pt-4 border-t border-gray-600/30">
+                <h4 className="text-sm font-semibold text-[#ecb62f] mb-1">Resolution Criteria</h4>
+                <textarea
+                  defaultValue={marketProposal?.resolution_criteria || selectedSuggestion?.resolution_criteria || ""}
+                  onChange={(e) => {
+                    setMarketProposal((prev: any) => ({
+                      ...prev,
+                      resolution_criteria: e.target.value,
+                    }));
+                  }}
+                  className="w-full bg-[#2f2f35]/70 border border-gray-600/50 rounded-lg p-3 text-gray-100 text-sm resize-none focus:border-[#d5a514] focus:outline-none transition-colors"
+                  rows={3}
+                  placeholder="Describe exactly how this market will be resolved. Be specific and include links to the sources that will determine the outcome."
+                />
+              </div>
+            </div>
           </motion.div>
         )}
 

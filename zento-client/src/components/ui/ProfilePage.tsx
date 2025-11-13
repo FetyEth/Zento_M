@@ -569,48 +569,52 @@ const ProfilePage = () => {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center">
               {/* User Coins Display */}
               {user && (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-lg shadow-sm">
-                  <PixelCoins className="w-4 h-4 text-[#d5a514]" />
-                  <span className="text-sm font-semibold text-[#d5a514]">{(user.points ?? 0).toLocaleString()}</span>
+                <div className="flex items-center mr-1 gap-1 px-2 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-md shadow-sm sm:gap-1.5 sm:px-2 sm:py-2 sm:rounded-lg">
+                  <PixelCoins className="w-3.5 h-3.5 text-[#d5a514] sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-semibold text-[#d5a514]">
+                    {(user.points ?? 0).toLocaleString()}
+                  </span>
                 </div>
               )}
 
               {/* Right Action Buttons */}
-              <div className="flex items-center gap-2">
-                {[
-                  {
-                    label: "Get Faucet",
-                    icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,
-                    href: "https://www.bnbchain.org/en/testnet-faucet",
-                    isLink: true,
-                  },
-                ].map((btn, i) =>
-                  btn.isLink ? (
-                    <a
-                      key={i}
-                      href={btn.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={btn.label}
-                      className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
-                    >
-                      {btn.icon}
-                    </a>
-                  ) : (
-                    <button
-                      key={i}
-                      // onClick={btn.onClick}
-                      title={btn.label}
-                      className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
-                    >
-                      {btn.icon}
-                    </button>
-                  ),
-                )}
-              </div>
+              {account?.address && (
+                <div className="flex items-center gap-2 transform translate-x-1">
+                  {[
+                    {
+                      label: "Get Faucet",
+                      icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,
+                      href: "https://www.bnbchain.org/en/testnet-faucet",
+                      isLink: true,
+                    },
+                  ].map((btn: any, i) =>
+                    btn.isLink ? (
+                      <a
+                        key={i}
+                        href={btn.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </a>
+                    ) : (
+                      <button
+                        key={i}
+                        onClick={btn.onClick}
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </button>
+                    ),
+                  )}
+                </div>
+              )}
 
               {/* Wallet Connect */}
               <div className="flex items-center">

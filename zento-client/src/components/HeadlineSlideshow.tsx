@@ -10,14 +10,22 @@ interface NewsItem {
   score: number;
   upvote_ratio: number;
   num_comments: number;
+  url?: string;
+  subreddit?: string;
+  real_data_context?: any;
 }
 
 interface HeadlineSlideshowProps {
   headlines: NewsItem[];
   isLoading?: boolean;
+  onHeadlineClick?: any;
 }
 
-const HeadlineSlideshow: React.FC<HeadlineSlideshowProps> = ({ headlines, isLoading = false }) => {
+const HeadlineSlideshow: React.FC<HeadlineSlideshowProps> = ({ 
+  headlines, 
+  isLoading = false,
+  onHeadlineClick 
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -64,6 +72,12 @@ const HeadlineSlideshow: React.FC<HeadlineSlideshowProps> = ({ headlines, isLoad
     router.push(`/create?headline=${encodedHeadline}`);
   };
 
+  const handleHeadlineClick = () => {
+    if (onHeadlineClick && headlines[currentIndex]) {
+      onHeadlineClick(headlines[currentIndex]);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-full bg-[#27272b]/30 border-y border-[#d5a514]/10 py-3 animate-pulse">
@@ -97,7 +111,11 @@ const HeadlineSlideshow: React.FC<HeadlineSlideshowProps> = ({ headlines, isLoad
               isAnimating ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
             }`}
           >
-            <p className="text-gray-300 text-sm truncate cursor-default">
+            <p 
+              className="text-gray-300 text-sm truncate cursor-pointer hover:text-white transition-colors"
+              onClick={handleHeadlineClick}
+              title="Click to view insights"
+            >
               {currentHeadline.title || currentHeadline.summary}
             </p>
           </div>

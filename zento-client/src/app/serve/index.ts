@@ -144,7 +144,7 @@ class PredictionMarketsAPI {
   private baseUrl: string;
   public sessionId: string | null = null;
 
-  constructor(baseUrl: string = "https://pivot-tst.onrender.com") {
+  constructor(baseUrl: string = "https://pivot-tst-1.onrender.com") {
     this.baseUrl = baseUrl;
   }
 

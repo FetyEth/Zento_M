@@ -622,71 +622,116 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
                 </Link>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex gap-2 items-center flex-wrap">
-                  <ConnectButton
-                    client={client}
-                    chain={chain}
-                    wallets={wallets}
-                    connectButton={{
-                      label: (
-                        <>
-                          {/* ✅ Proper wallet icon */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            style={{ marginRight: "2px" }}
-                          >
-                            <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z" />
-                            <path d="M21 12h-4a2 2 0 0 0 0 4h4" />
-                          </svg>
-                          Sign In
-                        </>
-                      ),
-                      style: {
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        whiteSpace: "nowrap",
-                        fontSize: "14px",
-                        gap: "0.4rem",
-                        height: "2.5rem",
-                        position: "relative",
-                        overflow: "hidden",
-                        backgroundColor: "#d5a514",
-                        color: "white",
-                        fontWeight: 600,
-                        padding: "0.75rem 0.35rem",
-                        borderRadius: "0.375rem",
-                        transition: "all 0.2s ease-in-out",
-                        cursor: "pointer",
-                      },
-                    }}
-                    detailsButton={{
-                      displayBalanceToken: {
-                        [chain.id]: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
-                      },
-                    }}
-                    connectModal={{
-                      size: "wide",
-                      title: "Sign in to your account",
-                      titleIcon: "",
-                      showThirdwebBranding: true,
-                    }}
-                    accountAbstraction={{
-                      chain: chain,
-                      sponsorGas: true,
-                    }}
-                  />
-                </div>
+                {/* Right Side Actions */}
+                <div className="flex items-center">
+              {/* User Coins Display */}
+              {user && (
+                <div className="flex items-center mr-1 gap-1 px-2 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-md shadow-sm sm:gap-1.5 sm:px-2 sm:py-2 sm:rounded-lg">
+                <PixelCoins className="w-3.5 h-3.5 text-[#d5a514] sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-semibold text-[#d5a514]">
+                  {(user.points ?? 0).toLocaleString()}
+                </span>
               </div>
+              )}
+
+                {/* Right Action Buttons */}
+              {account?.address && (
+                <div className="flex items-center gap-2 transform translate-x-1">
+                  {[
+                    {
+                      label: "Get Faucet",
+                      icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,
+                      href: "https://www.bnbchain.org/en/testnet-faucet",
+                      isLink: true,
+                    },
+                  ].map((btn: any, i) =>
+                    btn.isLink ? (
+                      <a
+                        key={i}
+                        href={btn.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </a>
+                    ) : (
+                      <button
+                        key={i}
+                        onClick={btn.onClick}
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </button>
+                    ),
+                  )}
+                </div>
+              )}
+
+              {/* Wallet Connect */}
+              <div className="flex items-center">
+                <ConnectButton
+                  client={client}
+                  chain={chain}
+                  wallets={wallets}
+                  connectButton={{
+                    label: (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1"
+                        >
+                          <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z" />
+                          <path d="M21 12h-4a2 2 0 0 0 0 4h4" />
+                        </svg>
+                        Sign In
+                      </>
+                    ),
+                    style: {
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      whiteSpace: "nowrap",
+                      fontSize: "14px",
+                      gap: "0.4rem",
+                      height: "2.5rem",
+                      backgroundColor: "#d5a514",
+                      color: "white",
+                      fontWeight: 600,
+                      padding: "0.75rem 0.75rem",
+                      borderRadius: "0.5rem",
+                      transition: "all 0.2s ease-in-out",
+                      cursor: "pointer",
+                      boxShadow: "0 0 8px rgba(213,165,20,0.3)",
+                    },
+                  }}
+                  detailsButton={{
+                    displayBalanceToken: {
+                      [chain.id]: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
+                    },
+                  }}
+                  connectModal={{
+                    size: "wide",
+                    title: "Sign in to your account",
+                    showThirdwebBranding: true,
+                  }}
+                  accountAbstraction={{
+                    chain: chain,
+                    sponsorGas: true,
+                  }}
+                />
+              </div>
+            </div>
             </div>
           </div>
         </header>
@@ -799,95 +844,139 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
     <div className="min-h-screen bg-[1c1b20] mb-16 lg:mb-0">
       {/* HEADER */}
       <header className="bg-[#1c1b20] sticky top-0 z-40 overflow-hidden animate-fadeInUp border-b border-b-[var(--Stroke-Dark,#2c2c2f)]">
-        <div className="max-w-7xl mx-auto py-4 px-3 sm:px-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 sm:gap-6">
-              <h1 className="text-xl sm:text-2xl font-bold text-white">
-                <Link href="/">
-                  <img src="/zento.png" alt="Zento Logo" className="ml-1 sm:ml-2 h-10 w-auto sm:h-12" />{" "}
+          <div className="max-w-7xl mx-auto py-4 px-3 sm:px-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 sm:gap-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-white">
+                  <Link href="/">
+                    <img src="/zento.png" alt="Zento Logo" className="ml-1 sm:ml-2 h-10 w-auto sm:h-12" />{" "}
+                  </Link>
+                </h1>
+                <span className="text-gray-300 ml-6 font-medium transition-colors relative hidden lg:flex pb-1">
+                  Market
+                  <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3/4 h-[2px] bg-[#d5a514]"></span>
+                </span>
+
+                {/* Leaderboard Link - Desktop Only */}
+                <Link href="/leaderboard" className="hidden lg:block group relative ml-6">
+                  <span className="text-gray-300 transition-colors duration-200 font-medium">Leaderboard</span>
+                  <span className="absolute left-0 -bottom-0.5 h-[2px] w-0 bg-[#008259] transition-all duration-300 group-hover:w-full"></span>
                 </Link>
-              </h1>
-              <span className="text-gray-300 ml-6 font-medium transition-colors relative hidden lg:flex pb-1">
-                Market
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3/4 h-[2px] bg-[#d5a514]"></span>
-              </span>
-              <Link href="/leaderboard" className="hidden lg:block group ml-6">
-                <span className="text-gray-300 font-medium">Leaderboard</span>
-                <span className="absolute left-0 -bottom-0.5 h-[2px] w-0 bg-[#d5a514] transition-all group-hover:w-full"></span>
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
+              </div>
+
+                {/* Right Side Actions */}
+                <div className="flex items-center">
+              {/* User Coins Display */}
               {user && (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-lg">
-                  <PixelCoins className="w-4 h-4 text-[#d5a514]" />
-                  <span className="text-sm font-semibold text-[#d5a514]">{(user.points ?? 0).toLocaleString()}</span>
+                <div className="flex items-center mr-1 gap-1 px-2 py-2 bg-[#d5a514]/10 border border-[#d5a514]/30 rounded-md shadow-sm sm:gap-1.5 sm:px-2 sm:py-2 sm:rounded-lg">
+                <PixelCoins className="w-3.5 h-3.5 text-[#d5a514] sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-semibold text-[#d5a514]">
+                  {(user.points ?? 0).toLocaleString()}
+                </span>
+              </div>
+              )}
+
+                {/* Right Action Buttons */}
+                {account?.address && (
+                <div className="flex items-center gap-2 transform translate-x-1">
+                  {[
+                    {
+                      label: "Get Faucet",
+                      icon: <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-[#d5a514]" />,
+                      href: "https://www.bnbchain.org/en/testnet-faucet",
+                      isLink: true,
+                    },
+                  ].map((btn: any, i) =>
+                    btn.isLink ? (
+                      <a
+                        key={i}
+                        href={btn.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </a>
+                    ) : (
+                      <button
+                        key={i}
+                        onClick={btn.onClick}
+                        title={btn.label}
+                        className="flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg bg-[#27272b] hover:bg-gray-700 text-gray-300 transition-all duration-200"
+                      >
+                        {btn.icon}
+                      </button>
+                    ),
+                  )}
                 </div>
               )}
-              <ConnectButton
-                client={client}
-                chain={chain}
-                wallets={wallets}
-                connectButton={{
-                  label: (
-                    <>
-                      {/* ✅ Proper wallet icon */}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ marginRight: "2px" }}
-                      >
-                        <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z" />
-                        <path d="M21 12h-4a2 2 0 0 0 0 4h4" />
-                      </svg>
-                      Sign In
-                    </>
-                  ),
-                  style: {
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    whiteSpace: "nowrap",
-                    fontSize: "14px",
-                    gap: "0.4rem",
-                    height: "2.5rem",
-                    position: "relative",
-                    overflow: "hidden",
-                    backgroundColor: "#d5a514",
-                    color: "white",
-                    fontWeight: 600,
-                    padding: "0.75rem 0.35rem",
-                    borderRadius: "0.375rem",
-                    transition: "all 0.2s ease-in-out",
-                    cursor: "pointer",
-                  },
-                }}
-                detailsButton={{
-                  displayBalanceToken: {
-                    [chain.id]: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
-                  },
-                }}
-                connectModal={{
-                  size: "wide",
-                  title: "Sign in to your account",
-                  titleIcon: "",
-                  showThirdwebBranding: true,
-                }}
-                accountAbstraction={{
-                  chain: chain,
-                  sponsorGas: true,
-                }}
-              />
+
+              {/* Wallet Connect */}
+              <div className="flex items-center">
+                <ConnectButton
+                  client={client}
+                  chain={chain}
+                  wallets={wallets}
+                  connectButton={{
+                    label: (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1"
+                        >
+                          <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z" />
+                          <path d="M21 12h-4a2 2 0 0 0 0 4h4" />
+                        </svg>
+                        Sign In
+                      </>
+                    ),
+                    style: {
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      whiteSpace: "nowrap",
+                      fontSize: "14px",
+                      gap: "0.4rem",
+                      height: "2.5rem",
+                      backgroundColor: "#d5a514",
+                      color: "white",
+                      fontWeight: 600,
+                      padding: "0.75rem 0.75rem",
+                      borderRadius: "0.5rem",
+                      transition: "all 0.2s ease-in-out",
+                      cursor: "pointer",
+                      boxShadow: "0 0 8px rgba(213,165,20,0.3)",
+                    },
+                  }}
+                  detailsButton={{
+                    displayBalanceToken: {
+                      [chain.id]: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
+                    },
+                  }}
+                  connectModal={{
+                    size: "wide",
+                    title: "Sign in to your account",
+                    showThirdwebBranding: true,
+                  }}
+                  accountAbstraction={{
+                    chain: chain,
+                    sponsorGas: true,
+                  }}
+                />
+              </div>
+            </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       <div className="max-w-6xl px-4 sm:mx-auto mt-12 pb-16 mb-20 lg:pb-8">
         {/* Market Info Card */}
@@ -1695,7 +1784,7 @@ const MarketDetailPage: React.FC<MarketDetailPageProps> = ({ market }) => {
                               className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                                 isLoading
                                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                                  : "bg-[#d5a514] hover:bg-emerald-500/70 text-white"
+                                  : "bg-[#d5a514] hover:bg-yellow-500/70 text-white"
                               }`}
                             >
                               {isLoading ? (
